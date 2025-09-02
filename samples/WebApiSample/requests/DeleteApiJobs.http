@@ -1,0 +1,12 @@
+@baseUrl = https://localhost:7018/
+@contentType = application/json
+
+###############################
+### Request: DELETE /api/jobs
+###############################
+
+
+DELETE {{baseUrl}}/api/jobs
+Content-Type: {{contentType}}
+
+

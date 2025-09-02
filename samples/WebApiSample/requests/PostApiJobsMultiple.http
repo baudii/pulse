@@ -1,0 +1,15 @@
+@baseUrl = https://localhost:7018/
+@contentType = application/json
+
+######################################
+### Request: POST /api/jobs/multiple
+######################################
+
+### Query Parameter: count
+@count = 0
+
+
+POST {{baseUrl}}/api/jobs/multiple?count={{count}}
+Content-Type: {{contentType}}
+
+

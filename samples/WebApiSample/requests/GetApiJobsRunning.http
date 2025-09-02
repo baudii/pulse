@@ -1,0 +1,12 @@
+@baseUrl = https://localhost:7018/
+@contentType = application/json
+
+####################################
+### Request: GET /api/jobs/running
+####################################
+
+
+GET {{baseUrl}}/api/jobs/running
+Content-Type: {{contentType}}
+
+
