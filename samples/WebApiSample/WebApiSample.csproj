@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.8" />
+    <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\KK.Pulse.AspNetCore\KK.Pulse.AspNetCore.csproj" />
+    <ProjectReference Include="..\..\src\KK.Pulse.Core\KK.Pulse.Core.csproj" />
+    <ProjectReference Include="..\..\src\KK.Pulse.Storage.FileSystem\KK.Pulse.Storage.FileSystem.csproj" />
+    <ProjectReference Include="..\..\src\KK.Pulse.Storage.InMemory\KK.Pulse.Storage.InMemory.csproj" />
+    <ProjectReference Include="..\..\src\KK.Pulse.Storage.Redis\KK.Pulse.Storage.Redis.csproj" />
+  </ItemGroup>
+
+</Project>
