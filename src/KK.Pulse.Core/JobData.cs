@@ -12,14 +12,7 @@ namespace KK.Pulse.Core;
 /// </remarks>
 /// <param name="id">Id assigned to this job by <see cref="JobHandler"/>.</param>
 /// <param name="config">Jobs configuration object.</param>
-public sealed class JobData(
-	string id,
-	JobStatus status,
-	DateTime createdTime,
-	long jobExpireTime,
-	string? error,
-	object? result,
-	DateTime lastAccessTime)
+public sealed class JobData
 {
 	private readonly Lock _statusLock = new();
 	private readonly Lock _resultLock = new();
@@ -27,7 +20,25 @@ public sealed class JobData(
 
 	private IJobStorage _storage = default!;
 
-	public static JobData Create(string id, TimeSpan jobExpireTime, IJobStorage storage)
+	internal JobData(
+		string id,
+		JobStatus status,
+		DateTime createdTime,
+		long jobExpireTime,
+		string? error,
+		object? result,
+		DateTime lastAccessTime)
+	{
+		Id = id;
+		Status = status;
+		CreatedTime = createdTime;
+		JobExpireTime = jobExpireTime;
+		Error = error;
+		Result = result;
+		LastAccessTime = lastAccessTime;
+	}
+
+	internal static JobData Create(string id, TimeSpan jobExpireTime, IJobStorage storage)
 	{
 		var jobData = new JobData(id, JobStatus.Pending, DateTime.Now, jobExpireTime.Ticks, null, null, DateTime.UtcNow)
 		{
@@ -40,27 +51,27 @@ public sealed class JobData(
 	/// <summary>
 	/// Gets the unique id of the job.
 	/// </summary>
-	public string Id { get; } = id;
+	public string Id { get; }
 
 	/// <summary>
 	/// Gets the current status of the generation job.
 	/// </summary>
-	public JobStatus Status { get; private set; } = status;
+	public JobStatus Status { get; private set; }
 
 	/// <summary>
 	/// Gets the time when the job was created.
 	/// </summary>
-	public DateTime CreatedTime { get; } = createdTime;
+	public DateTime CreatedTime { get; }
 
 	/// <summary>
 	/// The last time this job was accessed or touched.
 	/// </summary>
-	public DateTime LastAccessTime { get; private set; } = lastAccessTime;
+	public DateTime LastAccessTime { get; private set; }
 
 	/// <summary>
 	/// Maximum idle time (in minutes) before a job is considered timed out and eligible for cleanup.
 	/// </summary>
-	public long JobExpireTime { get; } = jobExpireTime;
+	public long JobExpireTime { get; }
 
 	/// <summary>
 	/// Gets the amount of time that was spent executing this job.
@@ -70,12 +81,12 @@ public sealed class JobData(
 	/// <summary>
 	/// Gets the error message if the job failed, otherwise null.
 	/// </summary>
-	public string? Error { get; private set; } = error;
+	public string? Error { get; private set; }
 
 	/// <summary>
 	/// Gets or sets the result of a job.
 	/// </summary>
-	public object? Result { get; private set; } = result;
+	public object? Result { get; private set; }
 
 	public void AttachStorage(IJobStorage storage) => _storage = storage;
 
