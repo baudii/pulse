@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>KK.Pulse.AspNetCore</RootNamespace>
+    <AssemblyName>KK.Pulse.AspNetCore</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\KK.Pulse.Core\KK.Pulse.Core.csproj" />
+  </ItemGroup>
+
+</Project>

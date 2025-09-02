@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <RootNamespace>KK.Pulse.Core</RootNamespace>
+    <AssemblyName>KK.Pulse.Core</AssemblyName>
+	<Nullable>enable</Nullable>
+    <Version>1.0.1</Version>
+    <Authors>Baudi</Authors>
+    <Product>Pulse</Product>
+    <Description>Library for background tasks management.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="StyleCop.Cache" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Isle.Extensions.Logging" Version="1.6.2" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.8" />
+  </ItemGroup>
+
+</Project>
