@@ -50,7 +50,7 @@ public class JobsTestController(JobHandler jobHandler, ILogger<JobsTestControlle
 	public async Task<IActionResult> GetJob(string id, CancellationToken token)
 	{
 		logger.LogInformation($"Processing GET request /jobs/{id}");
-		var job = await jobHandler.JobStorage.GetJobAsync(id, token);
+		var job = await jobHandler.GetJobAsync(id, token);
 		if (job == null)
 		{
 			return NotFound();
@@ -65,7 +65,7 @@ public class JobsTestController(JobHandler jobHandler, ILogger<JobsTestControlle
 	{
 		logger.LogInformation($"Processing GET request /jobs");
 		List<JobDto> jobs = [];
-		await foreach (var job in jobHandler.JobStorage.EnumerateJobsAsync(token))
+		await foreach (var job in jobHandler.EnumerateJobsAsync(token))
 		{
 			jobs.Add(new JobDto(job));
 		}
@@ -79,7 +79,7 @@ public class JobsTestController(JobHandler jobHandler, ILogger<JobsTestControlle
 	{
 		logger.LogInformation($"Processing GET request /jobs/running");
 		List<JobDto> jobs = [];
-		await foreach (var job in jobHandler.JobStorage.EnumerateJobsAsync(token))
+		await foreach (var job in jobHandler.EnumerateJobsAsync(token))
 		{
 			if (job.Status == JobStatus.InProgress)
 			{
@@ -97,9 +97,9 @@ public class JobsTestController(JobHandler jobHandler, ILogger<JobsTestControlle
 		logger.LogInformation($"Processing DELETE request /jobs");
 
 		List<JobDto> jobs = [];
-		await foreach (var job in jobHandler.JobStorage.EnumerateJobsAsync(token))
+		await foreach (var job in jobHandler.EnumerateJobsAsync(token))
 		{
-			var removed = await jobHandler.JobStorage.RemoveJobAsync(job.Id, token);
+			var removed = await jobHandler.RemoveJobAsync(job.Id, token);
 			if (removed != null)
 			{
 				jobs.Add(new JobDto(removed));
@@ -114,7 +114,7 @@ public class JobsTestController(JobHandler jobHandler, ILogger<JobsTestControlle
 	public async Task<IActionResult> DeleteAllJobs(string id, CancellationToken token)
 	{
 		logger.LogInformation($"Processing DELETE request /jobs/{id}");
-		var removed = await jobHandler.JobStorage.RemoveJobAsync(id, token);
+		var removed = await jobHandler.RemoveJobAsync(id, token);
 		if (removed == null)
 		{
 			return NotFound();
