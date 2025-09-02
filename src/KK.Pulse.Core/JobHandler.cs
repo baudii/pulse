@@ -2,6 +2,8 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,7 +14,7 @@ namespace KK.Pulse.Core;
 /// </summary>
 public sealed class JobHandler : IDisposable
 {
-	public readonly IJobStorage JobStorage;
+	private readonly IJobStorage JobStorage;
 
 	private readonly ILogger<JobHandler> _logger;
 
@@ -21,6 +23,8 @@ public sealed class JobHandler : IDisposable
 	private readonly SemaphoreSlim _semaphoreParallelismLimiter;
 
 	private readonly SemaphoreSlim _semaphoreQueueLimiter;
+
+	private readonly ConcurrentDictionary<string, JobWorker> _activeWorkers;
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="JobHandler"/> class.
@@ -31,6 +35,7 @@ public sealed class JobHandler : IDisposable
 	{
 		_jobConfiguration = jobConfiguration.Value;
 		JobStorage = jobStorage;
+		_activeWorkers = new ConcurrentDictionary<string, JobWorker>();
 		_semaphoreParallelismLimiter = new SemaphoreSlim(_jobConfiguration.MaxDegreeParallelism, _jobConfiguration.MaxDegreeParallelism);
 		_semaphoreQueueLimiter = new SemaphoreSlim(_jobConfiguration.MaxJobQueueSize, _jobConfiguration.MaxJobQueueSize);
 		_logger = logger;
@@ -104,6 +109,21 @@ public sealed class JobHandler : IDisposable
 
 		_logger.LogDebug("Creating new job...");
 		return await CreateJobAsync(id, exectutionHandler, token);
+	}
+	public IAsyncEnumerable<JobData> EnumerateJobsAsync(CancellationToken token) => JobStorage.EnumerateJobsAsync(token);
+	public Task<JobData?> GetJobAsync(string id, CancellationToken token) => JobStorage.GetJobAsync(id, token);
+	public Task<bool> TryUpdateJobAsync(JobData jobData, CancellationToken token) => JobStorage.TryUpdateJobAsync(jobData, token);
+	public Task<bool> TryAddJobAsync(JobData jobData, CancellationToken token) => JobStorage.TryAddJobAsync(jobData, token);
+
+	public Task<JobData?> RemoveJobAsync(string id, CancellationToken token)
+	{
+		var job = JobStorage.RemoveJobAsync(id, token);
+		if (_activeWorkers.TryGetValue(id, out var worker))
+		{
+			worker?.Dispose();
+		}
+
+		return job;
 	}
 
 	/// <summary>
@@ -216,6 +236,7 @@ public sealed class JobHandler : IDisposable
 			_logger.LogDebug($"Initiating execution of a job ({jobData})");
 			await jobData.SetStatusAsync(JobStatus.InProgress, token: token);
 
+			_activeWorkers.TryAdd(jobData.Id, jobWorker);
 			await jobWorker.ExecuteAsync(jobData, token).ConfigureAwait(false);
 
 			_logger.LogInformation($"Job ({jobData}) was executed successfully");
@@ -233,6 +254,7 @@ public sealed class JobHandler : IDisposable
 		}
 		finally
 		{
+			_activeWorkers.TryRemove(jobData.Id, out _);
 			_semaphoreParallelismLimiter.Release();
 			_logger.LogDebug($"Job ({jobData}) finished execution. Status: {jobData.Status}.");
 		}
