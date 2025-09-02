@@ -14,7 +14,7 @@ namespace KK.Pulse.Core;
 /// </summary>
 public sealed class JobHandler : IDisposable
 {
-	private readonly IJobStorage JobStorage;
+	private readonly IJobStorage _jobStorage;
 
 	private readonly ILogger<JobHandler> _logger;
 
@@ -34,7 +34,7 @@ public sealed class JobHandler : IDisposable
 	public JobHandler(IJobStorage jobStorage, ILogger<JobHandler> logger, IOptions<PulseConfig> jobConfiguration)
 	{
 		_jobConfiguration = jobConfiguration.Value;
-		JobStorage = jobStorage;
+		_jobStorage = jobStorage;
 		_activeWorkers = new ConcurrentDictionary<string, JobWorker>();
 		_semaphoreParallelismLimiter = new SemaphoreSlim(_jobConfiguration.MaxDegreeParallelism, _jobConfiguration.MaxDegreeParallelism);
 		_semaphoreQueueLimiter = new SemaphoreSlim(_jobConfiguration.MaxJobQueueSize, _jobConfiguration.MaxJobQueueSize);
@@ -89,11 +89,11 @@ public sealed class JobHandler : IDisposable
 		if (overwrite)
 		{
 			_logger.LogDebug("Force overwrite flag was received.");
-			await JobStorage.RemoveJobAsync(id, token);
+			await _jobStorage.RemoveJobAsync(id, token);
 		}
 		else
 		{
-			var existingJob = await JobStorage.GetJobAsync(id, token);
+			var existingJob = await _jobStorage.GetJobAsync(id, token);
 			if (existingJob != null)
 			{
 				if (existingJob.Status is not JobStatus.Failed and not JobStatus.Cancelled)
@@ -103,21 +103,21 @@ public sealed class JobHandler : IDisposable
 				}
 
 				_logger.LogDebug($"Removing existing job with status: {existingJob.Status}...");
-				await JobStorage.RemoveJobAsync(id, token);
+				await _jobStorage.RemoveJobAsync(id, token);
 			}
 		}
 
 		_logger.LogDebug("Creating new job...");
 		return await CreateJobAsync(id, exectutionHandler, token);
 	}
-	public IAsyncEnumerable<JobData> EnumerateJobsAsync(CancellationToken token) => JobStorage.EnumerateJobsAsync(token);
-	public Task<JobData?> GetJobAsync(string id, CancellationToken token) => JobStorage.GetJobAsync(id, token);
-	public Task<bool> TryUpdateJobAsync(JobData jobData, CancellationToken token) => JobStorage.TryUpdateJobAsync(jobData, token);
-	public Task<bool> TryAddJobAsync(JobData jobData, CancellationToken token) => JobStorage.TryAddJobAsync(jobData, token);
+	public IAsyncEnumerable<JobData> EnumerateJobsAsync(CancellationToken token) => _jobStorage.EnumerateJobsAsync(token);
+	public Task<JobData?> GetJobAsync(string id, CancellationToken token) => _jobStorage.GetJobAsync(id, token);
+	public Task<bool> TryUpdateJobAsync(JobData jobData, CancellationToken token) => _jobStorage.TryUpdateJobAsync(jobData, token);
+	public Task<bool> TryAddJobAsync(JobData jobData, CancellationToken token) => _jobStorage.TryAddJobAsync(jobData, token);
 
 	public Task<JobData?> RemoveJobAsync(string id, CancellationToken token)
 	{
-		var job = JobStorage.RemoveJobAsync(id, token);
+		var job = _jobStorage.RemoveJobAsync(id, token);
 		if (_activeWorkers.TryGetValue(id, out var worker))
 		{
 			worker?.Dispose();
@@ -134,7 +134,7 @@ public sealed class JobHandler : IDisposable
 	{
 		int unfinished = 0;
 		int total = 0;
-		await foreach (var jobData in JobStorage.EnumerateJobsAsync(token))
+		await foreach (var jobData in _jobStorage.EnumerateJobsAsync(token))
 		{
 			total++;
 			if (jobData.Status is JobStatus.Pending or JobStatus.InProgress)
@@ -159,12 +159,12 @@ public sealed class JobHandler : IDisposable
 		int totalRemoved = 0;
 		int totalFailed = 0;
 		int totalJobs = 0;
-		await foreach (var jobData in JobStorage.EnumerateJobsAsync(token))
+		await foreach (var jobData in _jobStorage.EnumerateJobsAsync(token))
 		{
 			totalJobs++;
 			if (jobData.IsExpired())
 			{
-				if (await JobStorage.RemoveJobAsync(jobData.Id, token) != null)
+				if (await _jobStorage.RemoveJobAsync(jobData.Id, token) != null)
 				{
 					totalRemoved++;
 				}
@@ -194,15 +194,15 @@ public sealed class JobHandler : IDisposable
 	/// <returns>A task representing the asynchronous operation with a <see cref="JobData"/> as a return value.</returns>
 	private async Task<JobData> CreateJobAsync(string id, ExecutableHandler executionHandler, CancellationToken token)
 	{
-		JobData jobData = JobData.Create(id, _jobConfiguration.JobExpireTime, JobStorage);
+		JobData jobData = JobData.Create(id, _jobConfiguration.JobExpireTime, _jobStorage);
 		JobWorker jobWorker = new(executionHandler, _jobConfiguration.JobMaxRunTime);
 
-		if (!await JobStorage.TryAddJobAsync(jobData, token))
+		if (!await _jobStorage.TryAddJobAsync(jobData, token))
 		{
 			throw new InvalidOperationException($"Could not add job ({jobData}) to the pool");
 		}
 
-		_logger.LogDebug($"Successfully added job ({jobData}) to the storage {JobStorage.GetType().Name}.");
+		_logger.LogDebug($"Successfully added job ({jobData}) to the storage {_jobStorage.GetType().Name}.");
 		using var timeoutCts = new CancellationTokenSource(_jobConfiguration.EnqueueTimeout);
 		try
 		{
