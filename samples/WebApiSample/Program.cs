@@ -1,14 +1,15 @@
 using Isle.Configuration;
 using KK.Pulse.AspNetCore;
 using KK.Pulse.Storage.InMemory;
-using Serilog;
+using NLog.Web;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
-builder.Host.UseSerilog((context, configuration) =>
-	configuration.ReadFrom.Configuration(context.Configuration));
+builder.Logging.ClearProviders();
+builder.Logging.AddNLogWeb();
+
 builder.Services
 	.AddPulse(options =>
 	{
@@ -26,7 +27,6 @@ if (app.Environment.IsDevelopment())
 	app.MapOpenApi();
 }
 
-app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
 app.MapControllers();
 
