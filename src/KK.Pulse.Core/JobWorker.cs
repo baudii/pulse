@@ -40,6 +40,14 @@ internal sealed class JobWorker(ExecutableHandler handler, TimeSpan maxRunTime) 
 		}
 	}
 
+	/// <summary>
+	/// Cancels this worker.
+	/// </summary>
+	public void Cancel()
+	{
+		_localCts.Cancel();
+	}
+
 	/// <inheritdoc/>
 	public void Dispose()
 	{
