@@ -120,7 +120,7 @@ public sealed class JobHandler : IDisposable
 		var job = _jobStorage.RemoveJobAsync(id, token);
 		if (_activeWorkers.TryGetValue(id, out var worker))
 		{
-			worker?.Dispose();
+			worker.Cancel();
 		}
 
 		return job;
@@ -196,6 +196,7 @@ public sealed class JobHandler : IDisposable
 	{
 		JobData jobData = JobData.Create(id, _jobConfiguration.JobExpireTime, _jobStorage);
 		JobWorker jobWorker = new(executionHandler, _jobConfiguration.JobMaxRunTime);
+		_activeWorkers.TryAdd(id, jobWorker);
 
 		if (!await _jobStorage.TryAddJobAsync(jobData, token))
 		{
@@ -255,7 +256,9 @@ public sealed class JobHandler : IDisposable
 		finally
 		{
 			_activeWorkers.TryRemove(jobData.Id, out _);
+			jobWorker.Dispose();
 			_semaphoreParallelismLimiter.Release();
+			_semaphoreQueueLimiter.Release();
 			_logger.LogDebug($"Job ({jobData}) finished execution. Status: {jobData.Status}.");
 		}
 	}
