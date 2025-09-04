@@ -3,9 +3,6 @@ using KK.Pulse.Core.Configuration;
 using KK.Pulse.Storage.InMemory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Runtime.CompilerServices;
-
-
 
 var cts = new CancellationTokenSource();
 AppDomain.CurrentDomain.ProcessExit += (_, _) =>

@@ -8,8 +8,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\KK.Pulse.Core\KK.Pulse.Core.csproj" />
-    <ProjectReference Include="..\src\KK.Pulse.Storage.InMemory\KK.Pulse.Storage.InMemory.csproj" />
+    <ProjectReference Include="..\..\src\KK.Pulse.Core\KK.Pulse.Core.csproj" />
+    <ProjectReference Include="..\..\src\KK.Pulse.Storage.InMemory\KK.Pulse.Storage.InMemory.csproj" />
   </ItemGroup>
 
 </Project>
